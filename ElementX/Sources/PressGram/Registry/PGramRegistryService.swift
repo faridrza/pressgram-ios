@@ -18,4 +18,12 @@ final class PGramRegistryService: PGramRegistryServicing {
         try await Task.sleep(for: .milliseconds(300))
         return PGramMockCatalog.response
     }
+
+    func requestInvite(homeserver: String, email: String, message: String) async throws {
+        // Phase 1.5: mock. Phase 2 will POST to dl.pgram.im/api/invite-request
+        // with proper rate-limit handling (429 / Retry-After) and the error
+        // taxonomy from docs/COMMUNITY-REGISTRY.md §3.4.
+        try await Task.sleep(for: .milliseconds(600))
+        MXLog.info("PGramRegistry mock: invite-request accepted for homeserver=\(homeserver) email=\(email) message.length=\(message.count)")
+    }
 }

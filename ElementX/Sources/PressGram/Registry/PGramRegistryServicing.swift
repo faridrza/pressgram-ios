@@ -11,4 +11,8 @@ import Foundation
 protocol PGramRegistryServicing {
     /// `GET /api/community-servers` — Phase 1.5 returns mock data.
     func fetchCatalog() async throws -> PGramCatalogResponse
+
+    /// `POST /api/invite-request` — submit a "request invitation" form for a public
+    /// homeserver with `registration.mode == "token"`. Phase 1.5 is mocked.
+    func requestInvite(homeserver: String, email: String, message: String) async throws
 }

@@ -411,6 +411,10 @@ extension AccessibilityTests {
         try await performAccessibilityAudit(named: "PGramCatalogScreen_Previews")
     }
 
+    func testPGramInviteRequestScreen() async throws {
+        try await performAccessibilityAudit(named: "PGramInviteRequestScreen_Previews")
+    }
+
     func testPGramWelcomeScreen() async throws {
         try await performAccessibilityAudit(named: "PGramWelcomeScreen_Previews")
     }

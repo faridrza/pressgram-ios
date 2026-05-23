@@ -380,7 +380,11 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
                     // once the catalog + Pressgram-flavoured register flow lands.
                     MXLog.warning("PGramWelcome: register tapped — Phase 1.5 (Pressgram register flow)")
                 case .requestInvite:
-                    MXLog.warning("PGramWelcome: requestInvite tapped — Phase 2 (invite-request flow)")
+                    let homeserver = PressgramUserPreferences.shared.lastSelectedHomeserver
+                        ?? appSettings.accountProviders.first
+                        ?? "pgram.im"
+                    showPGramInviteRequestScreen(homeserver: homeserver,
+                                                 serverDisplayName: Self.pgramServerDisplayName(for: homeserver))
                 case .changeServer:
                     let currentHomeserver = PressgramUserPreferences.shared.lastSelectedHomeserver
                         ?? appSettings.accountProviders.first
@@ -418,6 +422,28 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
                     navigationStackCoordinator.setSheetCoordinator(nil)
                 case .manualEntryRequested:
                     MXLog.warning("PGramCatalog: manualEntry tapped — Phase 2 (manual URL entry)")
+                }
+            }
+            .store(in: &cancellables)
+
+        coordinator.start()
+        let sheetStack = NavigationStackCoordinator()
+        sheetStack.setRootCoordinator(coordinator)
+        navigationStackCoordinator.setSheetCoordinator(sheetStack)
+    }
+
+    private func showPGramInviteRequestScreen(homeserver: String, serverDisplayName: String) {
+        let parameters = PGramInviteRequestScreenCoordinatorParameters(registryService: PGramRegistryService(),
+                                                                       homeserver: homeserver,
+                                                                       serverDisplayName: serverDisplayName)
+        let coordinator = PGramInviteRequestScreenCoordinator(parameters: parameters)
+
+        coordinator.actionsPublisher
+            .sink { [weak self] action in
+                guard let self else { return }
+                switch action {
+                case .dismiss, .finished:
+                    navigationStackCoordinator.setSheetCoordinator(nil)
                 }
             }
             .store(in: &cancellables)

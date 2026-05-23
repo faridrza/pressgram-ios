@@ -32,4 +32,26 @@ enum PGramStrings {
     static let catalogBadgeOpen = "Свободная регистрация"
     static let catalogBadgeToken = "По приглашениям"
     static let catalogBadgeClosed = "Регистрация закрыта"
+
+    // MARK: - Invite request screen
+
+    static let inviteRequestTitle = "Заявка на приглашение"
+    static let inviteRequestEmailLabel = "Email для связи"
+    static let inviteRequestEmailPlaceholder = "ivan@example.com"
+    static let inviteRequestMessageLabel = "Расскажите кратко о себе (от 20 до 1000 символов)"
+    static let inviteRequestSubmit = "Отправить заявку"
+    static let inviteRequestErrorEmail = "Проверьте формат email"
+    static let inviteRequestErrorMessage = "От 20 до 1000 символов"
+    static let inviteRequestErrorNetwork = "Сервер недоступен"
+    static let inviteRequestErrorRateLimited = "Слишком много заявок. Попробуйте через час."
+
+    // MARK: - Invite request success popup
+
+    static let inviteRequestSuccessTitle = "Заявка отправлена"
+    static func inviteRequestSuccessMessage(email: String) -> String {
+        "Ваша заявка отправлена администратору сервера. Ответ придёт на email \(email)."
+    }
+
+    static let inviteRequestSuccessHint = "Когда вы получите код приглашения, вернитесь сюда и нажмите «У меня есть код»."
+    static let inviteRequestSuccessButton = "На главную"
 }

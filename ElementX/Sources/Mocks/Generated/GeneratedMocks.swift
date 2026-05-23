@@ -14712,6 +14712,51 @@ class PGramRegistryServicingMock: PGramRegistryServicing, @unchecked Sendable {
             return fetchCatalogReturnValue
         }
     }
+    //MARK: - requestInvite
+
+    var requestInviteHomeserverEmailMessageThrowableError: Error?
+    var requestInviteHomeserverEmailMessageUnderlyingCallsCount = 0
+    var requestInviteHomeserverEmailMessageCallsCount: Int {
+        get {
+            if Thread.isMainThread {
+                return requestInviteHomeserverEmailMessageUnderlyingCallsCount
+            } else {
+                var returnValue: Int? = nil
+                DispatchQueue.main.sync {
+                    returnValue = requestInviteHomeserverEmailMessageUnderlyingCallsCount
+                }
+
+                return returnValue!
+            }
+        }
+        set {
+            if Thread.isMainThread {
+                requestInviteHomeserverEmailMessageUnderlyingCallsCount = newValue
+            } else {
+                DispatchQueue.main.sync {
+                    requestInviteHomeserverEmailMessageUnderlyingCallsCount = newValue
+                }
+            }
+        }
+    }
+    var requestInviteHomeserverEmailMessageCalled: Bool {
+        return requestInviteHomeserverEmailMessageCallsCount > 0
+    }
+    var requestInviteHomeserverEmailMessageReceivedArguments: (homeserver: String, email: String, message: String)?
+    var requestInviteHomeserverEmailMessageReceivedInvocations: [(homeserver: String, email: String, message: String)] = []
+    var requestInviteHomeserverEmailMessageClosure: ((String, String, String) async throws -> Void)?
+
+    func requestInvite(homeserver: String, email: String, message: String) async throws {
+        if let error = requestInviteHomeserverEmailMessageThrowableError {
+            throw error
+        }
+        requestInviteHomeserverEmailMessageCallsCount += 1
+        requestInviteHomeserverEmailMessageReceivedArguments = (homeserver: homeserver, email: email, message: message)
+        DispatchQueue.main.async {
+            self.requestInviteHomeserverEmailMessageReceivedInvocations.append((homeserver: homeserver, email: email, message: message))
+        }
+        try await requestInviteHomeserverEmailMessageClosure?(homeserver, email, message)
+    }
 }
 class PHGPostHogMock: PHGPostHogProtocol, @unchecked Sendable {
 

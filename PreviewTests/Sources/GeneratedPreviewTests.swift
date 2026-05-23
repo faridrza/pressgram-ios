@@ -820,6 +820,14 @@ extension PreviewTests {
     }
 
     @Test
+    func pGramInviteRequestScreen() async throws {
+        AppSettings.resetAllSettings() // Ensure this test's previews start with fresh settings.
+        for (index, preview) in PGramInviteRequestScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func pGramWelcomeScreen() async throws {
         AppSettings.resetAllSettings() // Ensure this test's previews start with fresh settings.
         for (index, preview) in PGramWelcomeScreen_Previews._allPreviews.enumerated() {

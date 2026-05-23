@@ -168,18 +168,21 @@ struct PGramWelcomeScreen: View {
     // MARK: - Text links
 
     private var textLinks: some View {
-        // Phase 1: register + invite-request are disabled. They light up once the catalog
-        // screen (Phase 1.5) and the invite-request flow (Phase 2) land.
+        // Phase 1.5: invite-request is live. Register remains disabled until the
+        // Pressgram-flavoured register flow lands.
         VStack(spacing: 16) {
             Text(PGramStrings.welcomeRegister)
                 .font(.system(size: 16, weight: .semibold))
                 .underline()
                 .foregroundStyle(.white.opacity(0.35))
 
-            Text(PGramStrings.welcomeRequestInvite)
-                .font(.system(size: 16, weight: .semibold))
-                .underline()
-                .foregroundStyle(.white.opacity(0.35))
+            Button { context.send(viewAction: .requestInvite) } label: {
+                Text(PGramStrings.welcomeRequestInvite)
+                    .font(.system(size: 16, weight: .semibold))
+                    .underline()
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            .buttonStyle(.plain)
         }
     }
 }
