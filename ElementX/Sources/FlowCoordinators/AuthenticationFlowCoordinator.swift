@@ -101,8 +101,12 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
     
     private let stateMachine: StateMachine<State, Event>
     private var cancellables = Set<AnyCancellable>()
-    
+
     private var oidcPresenter: OIDCAuthenticationPresenter?
+
+    // PGRAM: Welcome coordinator reference so the catalog can refresh the
+    // visible server widget after a selection without recreating the screen.
+    private weak var pgramWelcomeCoordinator: PGramWelcomeScreenCoordinator?
     
     // periphery:ignore - retaining purpose
     private var bugReportFlowCoordinator: BugReportFlowCoordinator?
@@ -336,7 +340,11 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
     // MARK: - PGRAM Welcome
 
     private func showPGramWelcomeScreen(fromState: State) {
-        let homeserver = appSettings.accountProviders.first ?? "pgram.im"
+        // Prefer the user's last selected homeserver (set by the catalog) over
+        // the configured default. Falls back to `pgram.im` only on a clean install.
+        let homeserver = PressgramUserPreferences.shared.lastSelectedHomeserver
+            ?? appSettings.accountProviders.first
+            ?? "pgram.im"
         let parameters = PGramWelcomeScreenCoordinatorParameters(currentHomeserver: homeserver,
                                                                  currentServerDisplayName: Self.pgramServerDisplayName(for: homeserver),
                                                                  showQRCodeLoginButton: !ProcessInfo.processInfo.isiOSAppOnMac)
@@ -374,17 +382,50 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
                 case .requestInvite:
                     MXLog.warning("PGramWelcome: requestInvite tapped — Phase 2 (invite-request flow)")
                 case .changeServer:
-                    MXLog.warning("PGramWelcome: changeServer tapped — Phase 1.5 (catalog screen)")
+                    let currentHomeserver = PressgramUserPreferences.shared.lastSelectedHomeserver
+                        ?? appSettings.accountProviders.first
+                        ?? "pgram.im"
+                    showPGramCatalogScreen(currentHomeserver: currentHomeserver)
                 }
             }
             .store(in: &cancellables)
 
         coordinator.start()
+        pgramWelcomeCoordinator = coordinator
         navigationStackCoordinator.setRootCoordinator(coordinator)
 
         if fromState == .initial {
             navigationRootCoordinator.setRootCoordinator(navigationStackCoordinator)
         }
+    }
+
+    private func showPGramCatalogScreen(currentHomeserver: String) {
+        let parameters = PGramCatalogScreenCoordinatorParameters(registryService: PGramRegistryService(),
+                                                                 currentHomeserver: currentHomeserver,
+                                                                 showManualEntryLink: false)
+        let coordinator = PGramCatalogScreenCoordinator(parameters: parameters)
+
+        coordinator.actionsPublisher
+            .sink { [weak self] action in
+                guard let self else { return }
+                switch action {
+                case .dismiss:
+                    navigationStackCoordinator.setSheetCoordinator(nil)
+                case .serverSelected(let server):
+                    PressgramUserPreferences.shared.lastSelectedHomeserver = server.homeserver
+                    pgramWelcomeCoordinator?.updateCurrentServer(homeserver: server.homeserver,
+                                                                 displayName: Self.pgramServerDisplayName(for: server.homeserver))
+                    navigationStackCoordinator.setSheetCoordinator(nil)
+                case .manualEntryRequested:
+                    MXLog.warning("PGramCatalog: manualEntry tapped — Phase 2 (manual URL entry)")
+                }
+            }
+            .store(in: &cancellables)
+
+        coordinator.start()
+        let sheetStack = NavigationStackCoordinator()
+        sheetStack.setRootCoordinator(coordinator)
+        navigationStackCoordinator.setSheetCoordinator(sheetStack)
     }
 
     private static func pgramServerDisplayName(for homeserver: String) -> String {

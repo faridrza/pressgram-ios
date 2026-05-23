@@ -28,6 +28,11 @@ final class PGramWelcomeScreenViewModel: PGramWelcomeScreenViewModelType, PGramW
                                                                  showQRCodeLoginButton: showQRCodeLoginButton))
     }
 
+    func updateServer(homeserver: String, displayName: String) {
+        state.currentHomeserver = homeserver
+        state.currentServerDisplayName = displayName
+    }
+
     override func process(viewAction: PGramWelcomeScreenViewAction) {
         switch viewAction {
         case .loginWithPassword:

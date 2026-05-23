@@ -101,7 +101,6 @@ struct PGramWelcomeScreen: View {
     // MARK: - Server widget
 
     private var serverWidget: some View {
-        // Phase 1: Сменить is visually disabled (catalog screen lands in Phase 1.5).
         HStack(spacing: 10) {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(PressgramColors.brandPrimary)
@@ -123,14 +122,17 @@ struct PGramWelcomeScreen: View {
 
             Spacer()
 
-            HStack(spacing: 4) {
-                Text(PGramStrings.welcomeChangeServer)
-                    .font(.system(size: 14, weight: .semibold))
-                    .underline()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .bold))
+            Button { context.send(viewAction: .changeServer) } label: {
+                HStack(spacing: 4) {
+                    Text(PGramStrings.welcomeChangeServer)
+                        .font(.system(size: 14, weight: .semibold))
+                        .underline()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .bold))
+                }
+                .foregroundStyle(.white)
             }
-            .foregroundStyle(.white.opacity(0.35))
+            .buttonStyle(.plain)
         }
     }
 

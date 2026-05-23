@@ -60,6 +60,10 @@ final class PGramWelcomeScreenCoordinator: CoordinatorProtocol {
         .store(in: &cancellables)
     }
 
+    func updateCurrentServer(homeserver: String, displayName: String) {
+        viewModel.updateServer(homeserver: homeserver, displayName: displayName)
+    }
+
     func toPresentable() -> AnyView {
         AnyView(PGramWelcomeScreen(context: viewModel.context))
     }

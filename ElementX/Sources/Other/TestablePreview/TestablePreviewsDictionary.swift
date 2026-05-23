@@ -109,6 +109,7 @@ enum TestablePreviewsDictionary {
         "NotificationSettingsEditScreenRoomCell_Previews" : NotificationSettingsEditScreenRoomCell_Previews.self,
         "NotificationSettingsEditScreen_Previews" : NotificationSettingsEditScreen_Previews.self,
         "NotificationSettingsScreen_Previews" : NotificationSettingsScreen_Previews.self,
+        "PGramCatalogScreen_Previews" : PGramCatalogScreen_Previews.self,
         "PGramWelcomeScreen_Previews" : PGramWelcomeScreen_Previews.self,
         "PINTextField_Previews" : PINTextField_Previews.self,
         "PaginationIndicatorRoomTimelineView_Previews" : PaginationIndicatorRoomTimelineView_Previews.self,

@@ -10,4 +10,7 @@ import Combine
 protocol PGramWelcomeScreenViewModelProtocol {
     var actionsPublisher: AnyPublisher<PGramWelcomeScreenViewModelAction, Never> { get }
     var context: PGramWelcomeScreenViewModelType.Context { get }
+
+    /// Called by the flow coordinator after the user picks a different server in the catalog.
+    func updateServer(homeserver: String, displayName: String)
 }

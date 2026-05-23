@@ -14642,6 +14642,77 @@ class OrientationManagerMock: OrientationManagerProtocol, @unchecked Sendable {
         lockOrientationClosure?(orientation)
     }
 }
+class PGramRegistryServicingMock: PGramRegistryServicing, @unchecked Sendable {
+
+    //MARK: - fetchCatalog
+
+    var fetchCatalogThrowableError: Error?
+    var fetchCatalogUnderlyingCallsCount = 0
+    var fetchCatalogCallsCount: Int {
+        get {
+            if Thread.isMainThread {
+                return fetchCatalogUnderlyingCallsCount
+            } else {
+                var returnValue: Int? = nil
+                DispatchQueue.main.sync {
+                    returnValue = fetchCatalogUnderlyingCallsCount
+                }
+
+                return returnValue!
+            }
+        }
+        set {
+            if Thread.isMainThread {
+                fetchCatalogUnderlyingCallsCount = newValue
+            } else {
+                DispatchQueue.main.sync {
+                    fetchCatalogUnderlyingCallsCount = newValue
+                }
+            }
+        }
+    }
+    var fetchCatalogCalled: Bool {
+        return fetchCatalogCallsCount > 0
+    }
+
+    var fetchCatalogUnderlyingReturnValue: PGramCatalogResponse!
+    var fetchCatalogReturnValue: PGramCatalogResponse! {
+        get {
+            if Thread.isMainThread {
+                return fetchCatalogUnderlyingReturnValue
+            } else {
+                var returnValue: PGramCatalogResponse? = nil
+                DispatchQueue.main.sync {
+                    returnValue = fetchCatalogUnderlyingReturnValue
+                }
+
+                return returnValue!
+            }
+        }
+        set {
+            if Thread.isMainThread {
+                fetchCatalogUnderlyingReturnValue = newValue
+            } else {
+                DispatchQueue.main.sync {
+                    fetchCatalogUnderlyingReturnValue = newValue
+                }
+            }
+        }
+    }
+    var fetchCatalogClosure: (() async throws -> PGramCatalogResponse)?
+
+    func fetchCatalog() async throws -> PGramCatalogResponse {
+        if let error = fetchCatalogThrowableError {
+            throw error
+        }
+        fetchCatalogCallsCount += 1
+        if let fetchCatalogClosure = fetchCatalogClosure {
+            return try await fetchCatalogClosure()
+        } else {
+            return fetchCatalogReturnValue
+        }
+    }
+}
 class PHGPostHogMock: PHGPostHogProtocol, @unchecked Sendable {
 
     //MARK: - optIn
