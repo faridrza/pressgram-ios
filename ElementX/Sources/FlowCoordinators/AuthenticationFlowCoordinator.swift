@@ -280,6 +280,12 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
     }
     
     private func showStartScreen(fromState: State, applying provisioningParameters: AccountProvisioningParameters? = nil) {
+        // PGRAM: Replace Element X welcome with the Pressgram welcome screen unless we're handling a deep-link.
+        if PressgramFeatureFlags.usePGramWelcomeScreen, provisioningParameters == nil {
+            showPGramWelcomeScreen(fromState: fromState)
+            return
+        }
+
         let mediaProvider = authenticationService.classicAppAccount.map { account in
             MediaProvider(mediaLoader: ClassicAppMediaLoader(classicAppAccount: account),
                           imageCache: .onlyInMemory,
@@ -321,12 +327,76 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
             .store(in: &cancellables)
         
         navigationStackCoordinator.setRootCoordinator(coordinator)
-        
+
         if fromState == .initial {
             navigationRootCoordinator.setRootCoordinator(navigationStackCoordinator)
         }
     }
-    
+
+    // MARK: - PGRAM Welcome
+
+    private func showPGramWelcomeScreen(fromState: State) {
+        let homeserver = appSettings.accountProviders.first ?? "pgram.im"
+        let parameters = PGramWelcomeScreenCoordinatorParameters(currentHomeserver: homeserver,
+                                                                 currentServerDisplayName: Self.pgramServerDisplayName(for: homeserver),
+                                                                 showQRCodeLoginButton: !ProcessInfo.processInfo.isiOSAppOnMac)
+        let coordinator = PGramWelcomeScreenCoordinator(parameters: parameters)
+
+        coordinator.actionsPublisher
+            .sink { [weak self] action in
+                guard let self else { return }
+
+                // Guard against double-tap: only fire transitions while we're
+                // still on the startScreen state. SwiftState's error handler
+                // calls `fatalError` on any unexpected transition, so a stray
+                // second tap during the navigation animation would crash the app.
+                guard stateMachine.state == .startScreen else {
+                    MXLog.warning("PGramWelcome: \(action) ignored — state is \(stateMachine.state)")
+                    return
+                }
+
+                switch action {
+                case .loginWithPassword:
+                    // Delegate to the vanilla path — ServerConfirmation owns the
+                    // window injection that ASWebAuthenticationSession needs.
+                    // Confirmed (2026-05-23) the vanilla path works end-to-end;
+                    // PGramWelcome's direct OIDC dispatch silently dropped the
+                    // web view (suspected window-injection race). Direct dispatch
+                    // lands in Phase 1.5 once the race is traced.
+                    stateMachine.tryEvent(.confirmServer(.login))
+                case .loginWithQR:
+                    stateMachine.tryEvent(.loginWithQR)
+                case .register:
+                    // Phase 1.5 — direct jump to .confirmServer(.register) breaks the state machine
+                    // when the Pressgram welcome owns the startScreen state. Wired up properly
+                    // once the catalog + Pressgram-flavoured register flow lands.
+                    MXLog.warning("PGramWelcome: register tapped — Phase 1.5 (Pressgram register flow)")
+                case .requestInvite:
+                    MXLog.warning("PGramWelcome: requestInvite tapped — Phase 2 (invite-request flow)")
+                case .changeServer:
+                    MXLog.warning("PGramWelcome: changeServer tapped — Phase 1.5 (catalog screen)")
+                }
+            }
+            .store(in: &cancellables)
+
+        coordinator.start()
+        navigationStackCoordinator.setRootCoordinator(coordinator)
+
+        if fromState == .initial {
+            navigationRootCoordinator.setRootCoordinator(navigationStackCoordinator)
+        }
+    }
+
+    private static func pgramServerDisplayName(for homeserver: String) -> String {
+        switch homeserver {
+        case "pgram.im":
+            return "Центральный (\(homeserver))"
+        default:
+            let subdomain = homeserver.split(separator: ".").first.map(String.init) ?? homeserver
+            return "\(subdomain.capitalized) (\(homeserver))"
+        }
+    }
+
     // MARK: - QR Code
     
     private func showQRCodeLoginScreen() {

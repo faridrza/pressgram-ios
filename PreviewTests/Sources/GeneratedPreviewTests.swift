@@ -812,6 +812,14 @@ extension PreviewTests {
     }
 
     @Test
+    func pGramWelcomeScreen() async throws {
+        AppSettings.resetAllSettings() // Ensure this test's previews start with fresh settings.
+        for (index, preview) in PGramWelcomeScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func pINTextField() async throws {
         AppSettings.resetAllSettings() // Ensure this test's previews start with fresh settings.
         for (index, preview) in PINTextField_Previews._allPreviews.enumerated() {

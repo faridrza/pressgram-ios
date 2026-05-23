@@ -407,6 +407,10 @@ extension AccessibilityTests {
         try await performAccessibilityAudit(named: "NotificationSettingsScreen_Previews")
     }
 
+    func testPGramWelcomeScreen() async throws {
+        try await performAccessibilityAudit(named: "PGramWelcomeScreen_Previews")
+    }
+
     func testPINTextField() async throws {
         try await performAccessibilityAudit(named: "PINTextField_Previews")
     }

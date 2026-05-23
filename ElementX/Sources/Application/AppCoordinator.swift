@@ -66,8 +66,11 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
 
     init(appDelegate: AppDelegate) {
         let appHooks = AppHooks()
+        // PGRAM: Register Pressgram hooks before setUp so brand/settings overrides take effect.
+        appHooks.registerAppSettingsHook(PressgramAppSettingsHook())
+        appHooks.registerCompoundHook(PressgramCompoundHook())
         appHooks.setUp()
-        
+
         // Override colours before we start building any UI components.
         appHooks.compoundHook.override(colors: Color.compound, uiColors: UIColor.compound)
         
