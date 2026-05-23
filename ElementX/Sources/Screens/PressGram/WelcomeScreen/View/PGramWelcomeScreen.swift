@@ -74,14 +74,10 @@ struct PGramWelcomeScreen: View {
 
     private var logoAndTitle: some View {
         VStack(spacing: 24) {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(PressgramColors.brandPrimary)
+            Image(asset: Asset.PressGram.pressgramLogo)
+                .resizable()
+                .renderingMode(.original)
                 .frame(width: 96, height: 96)
-                .overlay {
-                    Text("P")
-                        .font(.system(size: 56, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                }
                 .shadow(color: PressgramColors.brandPrimary.opacity(0.5), radius: 30, y: 8)
 
             Text(PGramStrings.appName)
@@ -102,14 +98,10 @@ struct PGramWelcomeScreen: View {
 
     private var serverWidget: some View {
         HStack(spacing: 10) {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(PressgramColors.brandPrimary)
+            Image(asset: Asset.PressGram.pressgramLogo)
+                .resizable()
+                .renderingMode(.original)
                 .frame(width: 36, height: 36)
-                .overlay {
-                    Text("P")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(PGramStrings.welcomeServerLabel)

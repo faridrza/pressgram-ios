@@ -120,15 +120,12 @@ struct PGramCatalogScreen: View {
 
         Button { context.send(viewAction: .selectServer(server)) } label: {
             HStack(spacing: 16) {
-                // Logo placeholder — 48x48 blue square with first letter
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(PressgramColors.brandPrimary)
+                // Phase 1.5: Pressgram logo for every server. Phase 2 will switch to
+                // server.logoURL via async image loading with a placeholder fallback.
+                Image(asset: Asset.PressGram.pressgramLogo)
+                    .resizable()
+                    .renderingMode(.original)
                     .frame(width: 48, height: 48)
-                    .overlay {
-                        Text(String(server.name.first.map(String.init)?.uppercased() ?? "P"))
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                    }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(server.name)

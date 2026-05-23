@@ -79,14 +79,11 @@ struct PGramInviteRequestScreen: View {
 
     private var serverWidget: some View {
         HStack(spacing: 10) {
-            Circle()
-                .fill(PressgramColors.brandPrimary)
+            Image(asset: Asset.PressGram.pressgramLogo)
+                .resizable()
+                .renderingMode(.original)
                 .frame(width: 48, height: 48)
-                .overlay {
-                    Text(String(context.viewState.serverDisplayName.first.map(String.init)?.uppercased() ?? "P"))
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                }
+                .clipShape(Circle())
 
             Text(context.viewState.serverDisplayName)
                 .font(.system(size: 16, weight: .semibold))
