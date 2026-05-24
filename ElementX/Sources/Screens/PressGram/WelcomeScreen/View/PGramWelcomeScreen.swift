@@ -53,18 +53,23 @@ struct PGramWelcomeScreen: View {
     // MARK: - Background
 
     private var backgroundDecoration: some View {
+        // Figma `67:404` (Ellipse 10) — deep royal blue #073FE9, sits lower-left
+        // partly off-canvas. Figma `67:405` (Ellipse 9) — sky cyan #38C1FC, sits
+        // upper-right. Both 368×368 with feGaussianBlur stdDev=90 in Figma; we
+        // keep blur radius close to the SVG sigma and pump opacity to 0.6 so the
+        // glow reads at the same intensity as the design.
         GeometryReader { geometry in
             ZStack {
                 Circle()
-                    .fill(PressgramColors.brandPrimary.opacity(0.35))
+                    .fill(PressgramColors.welcomeAuroraDeep.opacity(0.6))
                     .frame(width: 368, height: 368)
-                    .blur(radius: 120)
-                    .position(x: geometry.size.width * 0.15, y: geometry.size.height * 0.35)
+                    .blur(radius: 100)
+                    .position(x: geometry.size.width * 0.204, y: geometry.size.height * 0.437)
                 Circle()
-                    .fill(PressgramColors.brandPrimary.opacity(0.35))
+                    .fill(PressgramColors.welcomeAuroraLight.opacity(0.6))
                     .frame(width: 368, height: 368)
-                    .blur(radius: 120)
-                    .position(x: geometry.size.width * 0.85, y: geometry.size.height * 0.22)
+                    .blur(radius: 100)
+                    .position(x: geometry.size.width * 0.799, y: geometry.size.height * 0.266)
             }
         }
         .allowsHitTesting(false)

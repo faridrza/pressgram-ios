@@ -19,4 +19,10 @@ enum PressgramColors {
 
     /// Welcome screen background base — `#010308`.
     static let welcomeBackground = Color(red: 1.0 / 255.0, green: 3.0 / 255.0, blue: 8.0 / 255.0)
+
+    /// Welcome screen aurora ellipses (Figma `67:404` / `67:405`). Two soft blurred
+    /// blobs of different blues layered over `welcomeBackground` to produce the
+    /// Pressgram brand glow. Deep royal blue sits lower-left, sky cyan upper-right.
+    static let welcomeAuroraDeep = Color(red: 0x07 / 255.0, green: 0x3F / 255.0, blue: 0xE9 / 255.0)
+    static let welcomeAuroraLight = Color(red: 0x38 / 255.0, green: 0xC1 / 255.0, blue: 0xFC / 255.0)
 }
