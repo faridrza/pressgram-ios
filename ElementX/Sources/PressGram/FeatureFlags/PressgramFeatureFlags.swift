@@ -34,4 +34,13 @@ enum PressgramFeatureFlags {
     /// indicators just add noise. Once E2EE-capable satellites (e.g. x.pgram.im)
     /// ship, this becomes per-server (driven by `.well-known` capability).
     static let hideE2EEUIWhenServerDisabled = true
+
+    /// When `true`, `ServerConfirmationScreen` auto-fires its `.confirm` view
+    /// action the first time it captures a presentation window — the screen
+    /// renders for a single layout pass before the loading overlay appears,
+    /// so visually the user goes Welcome → loading → OIDC web view with no
+    /// intermediate "Choose account provider" tap. Pressgram already shows
+    /// the selected server on Welcome, so this screen has no information value
+    /// for the user.
+    static let autoContinueServerConfirmation = true
 }

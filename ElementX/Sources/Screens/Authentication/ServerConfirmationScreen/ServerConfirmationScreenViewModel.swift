@@ -55,7 +55,19 @@ class ServerConfirmationScreenViewModel: ServerConfirmationScreenViewModelType, 
         switch viewAction {
         case .updateWindow(let window):
             guard state.window != window else { return }
-            Task { state.window = window }
+            // PGRAM: auto-fire `.confirm` the first time we get a presentation
+            // window. Welcome already shows the selected server, so this screen
+            // is information-free for the user — visually they go straight to
+            // the OIDC web view (a loading overlay covers the in-flight
+            // configure + URL fetch). Only triggers on the *first* window so
+            // orientation changes / re-renders don't kick off another login.
+            let isFirstWindow = state.window == nil
+            Task {
+                state.window = window
+                if isFirstWindow, PressgramFeatureFlags.autoContinueServerConfirmation {
+                    process(viewAction: .confirm)
+                }
+            }
         case .confirm:
             switch state.mode {
             case .confirmation:
