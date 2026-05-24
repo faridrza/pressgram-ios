@@ -29,5 +29,16 @@ struct PressgramCompoundHook: CompoundHookProtocol {
         colors.override(\.iconAccentTertiary, with: brand)
         uiColors.override(\.iconAccentPrimary, with: brandUI)
         uiColors.override(\.iconAccentTertiary, with: brandUI)
+
+        // The "subtle" bloom under nav bars on HomeScreen / SpacesList / etc.
+        // (`Gradient.compound.subtle` → `gradientSubtleStop1…6`) defaults to a
+        // mint-green fade. Re-tint as a soft Pressgram blue → canvas fade so
+        // the chrome reads on-brand instead of leaking the Element accent.
+        colors.override(\.gradientSubtleStop1, with: brand.opacity(0.28))
+        colors.override(\.gradientSubtleStop2, with: brand.opacity(0.20))
+        colors.override(\.gradientSubtleStop3, with: brand.opacity(0.14))
+        colors.override(\.gradientSubtleStop4, with: brand.opacity(0.08))
+        colors.override(\.gradientSubtleStop5, with: brand.opacity(0.03))
+        colors.override(\.gradientSubtleStop6, with: brand.opacity(0.0))
     }
 }

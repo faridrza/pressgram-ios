@@ -124,8 +124,14 @@ class OnboardingFlowCoordinator: FlowCoordinatorProtocol {
     // MARK: - Private
     
     private var requiresVerification: Bool {
+        // PGRAM: skip the cross-signing / identity-confirmation onboarding screen
+        // entirely on non-E2EE servers (default Pressgram). The server-side
+        // `matrix_e2ee_filter` module prevents room encryption, so prompting the
+        // user to verify their crypto identity is meaningless. Re-enable once
+        // per-server capability detection ships.
+        if PressgramFeatureFlags.hideE2EEUIWhenServerDisabled { return false }
         // We want to make sure onboarding finishes but also every time the user becomes unverified (e.g. account reset)
-        !appSettings.hasRunIdentityConfirmationOnboarding || userSession.sessionSecurityStatePublisher.value.verificationState == .unverified
+        return !appSettings.hasRunIdentityConfirmationOnboarding || userSession.sessionSecurityStatePublisher.value.verificationState == .unverified
     }
     
     private var requiresAppLockSetup: Bool {
