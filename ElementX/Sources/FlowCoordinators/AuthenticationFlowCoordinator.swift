@@ -366,16 +366,21 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
 
                 switch action {
                 case .loginWithPassword:
-                    // Skip the vanilla "Choose account provider" confirmation step
-                    // — Welcome already shows the selected server. We configure the
-                    // service, fetch the OIDC URL, and transition directly to
-                    // `.oidcAuthentication`. The state machine already supports
-                    // `.startScreen => .oidcAuthentication` via `.continueWithOIDC`.
-                    // Any failure falls back to the vanilla server-confirmation
-                    // path so the user gets the upstream error UX for free.
-                    Task { [weak self] in
-                        await self?.pgramTryDirectLogin()
-                    }
+                    // Vanilla server-confirmation path. We previously short-cut
+                    // this to dispatch `.continueWithOIDC` straight from Welcome,
+                    // but `AuthenticationService.configure(for:flow:)` rotates the
+                    // session directory inside `makeClient` and tries to delete
+                    // the previous directory while the previous Rust client still
+                    // holds locked SQLite handles. Even `reset()` ahead of
+                    // configure can't release them in time (Rust SDK's `Drop` is
+                    // async), so the second login attempt within a session
+                    // crashes inside `SessionDirectories.delete()` in debug
+                    // builds. ServerConfirmation owns its own lifecycle and the
+                    // vanilla flow handles the configure→rotate dance without
+                    // racing the live client. Trade-off: one extra
+                    // "Choose account provider" tap. Auto-continue (visual skip)
+                    // will land as a separate change.
+                    stateMachine.tryEvent(.confirmServer(.login))
                 case .loginWithQR:
                     stateMachine.tryEvent(.loginWithQR)
                 case .register:
@@ -475,81 +480,6 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
     /// register / invite-request links in that case.
     private static func pgramLookupServer(homeserver: String) -> PGramServer? {
         PGramMockCatalog.servers.first { $0.homeserver == homeserver }
-    }
-
-    /// Mirrors `AuthenticationStartScreenViewModel.configureAccountProvider` for the
-    /// Pressgram welcome screen. Skips the vanilla server-confirmation step entirely
-    /// when the homeserver supports OIDC; falls back to `.confirmServer(.login)` for
-    /// every other case (no captured window, configure failure, password-only server,
-    /// OIDC URL failure) so the user gets the upstream error UX.
-    private func pgramTryDirectLogin() async {
-        let homeserver = PressgramUserPreferences.shared.lastSelectedHomeserver
-            ?? appSettings.accountProviders.first
-            ?? "pgram.im"
-
-        guard let window = pgramWelcomeCoordinator?.presentationWindow else {
-            MXLog.warning("PGramWelcome: no presentation window — falling back to vanilla path")
-            pgramFallbackToServerConfirmation()
-            return
-        }
-
-        let loadingId = "PGramWelcome-DirectLogin"
-        userIndicatorController.submitIndicator(UserIndicator(id: loadingId,
-                                                              type: .modal,
-                                                              title: L10n.commonLoading,
-                                                              persistent: true))
-        defer { userIndicatorController.retractIndicatorWithId(loadingId) }
-
-        // `configure(for:flow:)` is *not* idempotent: every call rotates the
-        // session directory (creates a fresh one, then tries to delete the
-        // previous one). The previous directory still holds locked SQLite
-        // handles owned by the live Rust client, so the second invocation
-        // crashes inside `SessionDirectories.delete()` via `MXLog.failure` in
-        // debug builds.
-        //
-        // Two protections:
-        //   1. Skip re-configuration entirely when the service is already
-        //      pointing at the same homeserver in login flow (cheap, common case
-        //      — user cancels the OIDC sheet and reopens it).
-        //   2. When we *do* need to (re)configure, call `reset()` first to
-        //      drop the previous client reference. Releasing the client lets
-        //      the Rust SDK's `Drop` impls close the SQLite file handles
-        //      before `rotateSessionDirectory` tries to remove the directory.
-        let currentHomeserver = authenticationService.homeserver.value
-        let alreadyConfigured = currentHomeserver.address == homeserver
-            && currentHomeserver.loginMode != .unknown
-            && authenticationService.flow == .login
-
-        if !alreadyConfigured {
-            authenticationService.reset()
-            if case .failure = await authenticationService.configure(for: homeserver, flow: .login) {
-                MXLog.warning("PGramWelcome: configure(for: \(homeserver)) failed — falling back to vanilla path")
-                pgramFallbackToServerConfirmation()
-                return
-            }
-        }
-
-        guard authenticationService.homeserver.value.loginMode.supportsOIDCFlow else {
-            // Password-only servers — the vanilla flow handles the login form.
-            pgramFallbackToServerConfirmation()
-            return
-        }
-
-        switch await authenticationService.urlForOIDCLogin(loginHint: nil) {
-        case .success(let oidcData):
-            // The user may have navigated away (catalog sheet, app backgrounded)
-            // while configure + urlForOIDCLogin were running.
-            guard stateMachine.state == .startScreen else { return }
-            stateMachine.tryEvent(.continueWithOIDC, userInfo: (oidcData, window))
-        case .failure:
-            MXLog.warning("PGramWelcome: urlForOIDCLogin failed — falling back to vanilla path")
-            pgramFallbackToServerConfirmation()
-        }
-    }
-
-    private func pgramFallbackToServerConfirmation() {
-        guard stateMachine.state == .startScreen else { return }
-        stateMachine.tryEvent(.confirmServer(.login))
     }
 
     // MARK: - QR Code

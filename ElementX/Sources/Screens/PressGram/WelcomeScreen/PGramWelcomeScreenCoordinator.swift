@@ -66,13 +66,6 @@ final class PGramWelcomeScreenCoordinator: CoordinatorProtocol {
         viewModel.updateServer(homeserver: homeserver, displayName: displayName, selectedServer: selectedServer)
     }
 
-    /// The window captured by `SwiftUIIntrospect` once the welcome view has been
-    /// laid out. `nil` until the first layout pass — callers should fall back to
-    /// the vanilla server-confirmation path when this isn't ready yet.
-    var presentationWindow: UIWindow? {
-        viewModel.context.viewState.window
-    }
-
     func toPresentable() -> AnyView {
         AnyView(PGramWelcomeScreen(context: viewModel.context))
     }
