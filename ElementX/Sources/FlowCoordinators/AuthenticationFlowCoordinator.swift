@@ -500,7 +500,20 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
                                                               persistent: true))
         defer { userIndicatorController.retractIndicatorWithId(loadingId) }
 
-        if case .failure = await authenticationService.configure(for: homeserver, flow: .login) {
+        // Configure is **not** idempotent — every call rotates the session
+        // directory, which then tries to delete the previous one. The previous
+        // directory still holds locked SQLite handles owned by the live Rust
+        // client, so the second tap (e.g. after the user cancels the OIDC web
+        // view and reopens it) crashes inside `SessionDirectories.delete()` in
+        // debug builds. Skip re-configuration when the service is already
+        // pointing at the same homeserver in login flow.
+        let currentHomeserver = authenticationService.homeserver.value
+        let alreadyConfigured = currentHomeserver.address == homeserver
+            && currentHomeserver.loginMode != .unknown
+            && authenticationService.flow == .login
+
+        if !alreadyConfigured,
+           case .failure = await authenticationService.configure(for: homeserver, flow: .login) {
             MXLog.warning("PGramWelcome: configure(for: \(homeserver)) failed — falling back to vanilla path")
             pgramFallbackToServerConfirmation()
             return
