@@ -149,10 +149,10 @@ struct PGramWelcomeScreen: View {
             if context.viewState.showQRCodeLoginButton {
                 Text(PGramStrings.welcomeLoginWithQR)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(PressgramColors.brandPrimary.opacity(0.35))
+                    .foregroundStyle(.white.opacity(0.4))
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(Color.white.opacity(0.35), in: .capsule)
+                    .background(Color.white.opacity(0.08), in: .capsule)
             }
         }
     }
