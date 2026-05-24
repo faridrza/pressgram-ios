@@ -1,6 +1,13 @@
 settings:
-  APP_DISPLAY_NAME: Element X
-  PRODUCTION_APP_NAME: Element
+  # PGRAM: APP_DISPLAY_NAME drives the Springboard label AND `OIDCConfiguration.clientName`
+  # (read via `InfoPlistReader.main.bundleDisplayName`). Changing this to "Pressgram"
+  # makes the MAS consent screen read "Continue to Pressgram?" instead of "Element X".
+  # APP_GROUP_IDENTIFIER and BASE_BUNDLE_IDENTIFIER stay on `io.element.*` until
+  # the AASA blocker is resolved — those are wired into Apple's universal-link
+  # verification (current AASA covers `io.element.elementx` only) and extension
+  # keychain access, so flipping them prematurely breaks login.
+  APP_DISPLAY_NAME: Pressgram
+  PRODUCTION_APP_NAME: Pressgram
   APP_GROUP_IDENTIFIER: group.io.element
   BASE_BUNDLE_IDENTIFIER: io.element.elementx
   ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: "colors/accent-color"
