@@ -123,7 +123,11 @@ struct HomeScreenContent: View {
                     RoomListFiltersView(state: $context.filtersState)
                 }
                 
-                if case let .show(state) = context.viewState.securityBannerMode {
+                // PGRAM: hide the recovery-key / out-of-sync banner on non-E2EE
+                // servers — there's nothing to back up when room encryption is
+                // disabled server-side.
+                if case let .show(state) = context.viewState.securityBannerMode,
+                   !PressgramFeatureFlags.hideE2EEUIWhenServerDisabled {
                     HomeScreenRecoveryKeyConfirmationBanner(state: state, context: context)
                 } else if context.viewState.shouldShowNewSoundBanner {
                     HomeScreenNewSoundBanner { context.send(viewAction: .dismissNewSoundBanner) }
