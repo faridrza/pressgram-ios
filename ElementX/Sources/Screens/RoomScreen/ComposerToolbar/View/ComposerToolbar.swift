@@ -61,7 +61,11 @@ struct ComposerToolbar: View {
         }
         .readFrame($frame)
         .safeAreaInset(edge: .top) {
-            if !context.viewState.isRoomEncrypted {
+            // PGRAM: hide the "Not encrypted" composer badge on Pressgram while
+            // E2EE is disabled server-side. Re-enable once we have per-server
+            // capability detection (currently the server's `matrix_e2ee_filter`
+            // module rejects encryption, so the badge is always-on noise).
+            if !context.viewState.isRoomEncrypted, !PressgramFeatureFlags.hideE2EEUIWhenServerDisabled {
                 Label {
                     Text(L10n.commonNotEncrypted)
                         .font(.compound.bodySM)

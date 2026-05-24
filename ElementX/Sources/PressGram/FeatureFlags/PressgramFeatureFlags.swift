@@ -28,6 +28,10 @@ enum PressgramFeatureFlags {
     static let usePGramCatalogScreen = false
 
     /// When `true`, hides E2EE-specific UI (badges, shields, encryption toggles,
-    /// cross-signing onboarding) on non-E2EE servers. Phase 2.
-    static let hideE2EEUIWhenServerDisabled = false
+    /// cross-signing onboarding) regardless of room state. Pressgram-default for
+    /// Phase 1.5 — the server-side `matrix_e2ee_filter` module already prevents
+    /// encryption being enabled on `pgram.im` rooms, so the "Not encrypted"
+    /// indicators just add noise. Once E2EE-capable satellites (e.g. x.pgram.im)
+    /// ship, this becomes per-server (driven by `.well-known` capability).
+    static let hideE2EEUIWhenServerDisabled = true
 }
