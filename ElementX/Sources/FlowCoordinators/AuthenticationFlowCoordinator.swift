@@ -500,23 +500,33 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
                                                               persistent: true))
         defer { userIndicatorController.retractIndicatorWithId(loadingId) }
 
-        // Configure is **not** idempotent — every call rotates the session
-        // directory, which then tries to delete the previous one. The previous
-        // directory still holds locked SQLite handles owned by the live Rust
-        // client, so the second tap (e.g. after the user cancels the OIDC web
-        // view and reopens it) crashes inside `SessionDirectories.delete()` in
-        // debug builds. Skip re-configuration when the service is already
-        // pointing at the same homeserver in login flow.
+        // `configure(for:flow:)` is *not* idempotent: every call rotates the
+        // session directory (creates a fresh one, then tries to delete the
+        // previous one). The previous directory still holds locked SQLite
+        // handles owned by the live Rust client, so the second invocation
+        // crashes inside `SessionDirectories.delete()` via `MXLog.failure` in
+        // debug builds.
+        //
+        // Two protections:
+        //   1. Skip re-configuration entirely when the service is already
+        //      pointing at the same homeserver in login flow (cheap, common case
+        //      — user cancels the OIDC sheet and reopens it).
+        //   2. When we *do* need to (re)configure, call `reset()` first to
+        //      drop the previous client reference. Releasing the client lets
+        //      the Rust SDK's `Drop` impls close the SQLite file handles
+        //      before `rotateSessionDirectory` tries to remove the directory.
         let currentHomeserver = authenticationService.homeserver.value
         let alreadyConfigured = currentHomeserver.address == homeserver
             && currentHomeserver.loginMode != .unknown
             && authenticationService.flow == .login
 
-        if !alreadyConfigured,
-           case .failure = await authenticationService.configure(for: homeserver, flow: .login) {
-            MXLog.warning("PGramWelcome: configure(for: \(homeserver)) failed — falling back to vanilla path")
-            pgramFallbackToServerConfirmation()
-            return
+        if !alreadyConfigured {
+            authenticationService.reset()
+            if case .failure = await authenticationService.configure(for: homeserver, flow: .login) {
+                MXLog.warning("PGramWelcome: configure(for: \(homeserver)) failed — falling back to vanilla path")
+                pgramFallbackToServerConfirmation()
+                return
+            }
         }
 
         guard authenticationService.homeserver.value.loginMode.supportsOIDCFlow else {
