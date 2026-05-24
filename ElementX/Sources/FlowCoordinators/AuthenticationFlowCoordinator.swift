@@ -347,7 +347,8 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
             ?? "pgram.im"
         let parameters = PGramWelcomeScreenCoordinatorParameters(currentHomeserver: homeserver,
                                                                  currentServerDisplayName: Self.pgramServerDisplayName(for: homeserver),
-                                                                 showQRCodeLoginButton: !ProcessInfo.processInfo.isiOSAppOnMac)
+                                                                 showQRCodeLoginButton: !ProcessInfo.processInfo.isiOSAppOnMac,
+                                                                 selectedServer: Self.pgramLookupServer(homeserver: homeserver))
         let coordinator = PGramWelcomeScreenCoordinator(parameters: parameters)
 
         coordinator.actionsPublisher
@@ -418,7 +419,8 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
                 case .serverSelected(let server):
                     PressgramUserPreferences.shared.lastSelectedHomeserver = server.homeserver
                     pgramWelcomeCoordinator?.updateCurrentServer(homeserver: server.homeserver,
-                                                                 displayName: Self.pgramServerDisplayName(for: server.homeserver))
+                                                                 displayName: Self.pgramServerDisplayName(for: server.homeserver),
+                                                                 selectedServer: server)
                     navigationStackCoordinator.setSheetCoordinator(nil)
                 case .manualEntryRequested:
                     MXLog.warning("PGramCatalog: manualEntry tapped — Phase 2 (manual URL entry)")
@@ -462,6 +464,14 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
             let subdomain = homeserver.split(separator: ".").first.map(String.init) ?? homeserver
             return "\(subdomain.capitalized) (\(homeserver))"
         }
+    }
+
+    /// Looks the homeserver up in the bundled mock catalog. Phase 2 swaps this for
+    /// a live fetch against `dl.pgram.im/api/community-servers` (with TTL cache).
+    /// Returns `nil` for unknown servers — Welcome falls back to hiding the
+    /// register / invite-request links in that case.
+    private static func pgramLookupServer(homeserver: String) -> PGramServer? {
+        PGramMockCatalog.servers.first { $0.homeserver == homeserver }
     }
 
     // MARK: - QR Code

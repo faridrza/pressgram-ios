@@ -22,15 +22,18 @@ final class PGramWelcomeScreenViewModel: PGramWelcomeScreenViewModelType, PGramW
 
     init(currentHomeserver: String,
          currentServerDisplayName: String,
-         showQRCodeLoginButton: Bool) {
+         showQRCodeLoginButton: Bool,
+         selectedServer: PGramServer? = nil) {
         super.init(initialViewState: PGramWelcomeScreenViewState(currentHomeserver: currentHomeserver,
                                                                  currentServerDisplayName: currentServerDisplayName,
-                                                                 showQRCodeLoginButton: showQRCodeLoginButton))
+                                                                 showQRCodeLoginButton: showQRCodeLoginButton,
+                                                                 selectedServer: selectedServer))
     }
 
-    func updateServer(homeserver: String, displayName: String) {
+    func updateServer(homeserver: String, displayName: String, selectedServer: PGramServer?) {
         state.currentHomeserver = homeserver
         state.currentServerDisplayName = displayName
+        state.selectedServer = selectedServer
     }
 
     override func process(viewAction: PGramWelcomeScreenViewAction) {

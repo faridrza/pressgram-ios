@@ -19,7 +19,8 @@ enum PGramStrings {
     static let welcomeChangeServer = "Сменить"
     static let welcomeLoginWithPassword = "Войти с паролем"
     static let welcomeLoginWithQR = "Вход по QR-коду"
-    static let welcomeRegister = "Регистрация (требуется код)"
+    static let welcomeRegisterOpen = "Регистрация"
+    static let welcomeRegisterTokenRequired = "Регистрация (требуется код)"
     static let welcomeRequestInvite = "Запросить приглашение"
     static let appName = "Pressgram"
 

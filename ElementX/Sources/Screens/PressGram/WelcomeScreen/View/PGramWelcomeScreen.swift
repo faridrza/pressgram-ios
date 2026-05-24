@@ -159,22 +159,31 @@ struct PGramWelcomeScreen: View {
 
     // MARK: - Text links
 
+    /// Register + invite-request links — both are conditional on the selected server's
+    /// `registration.mode` / `visibility`. Driven by Figma `67:286` (token+public, both),
+    /// `67:403` (open, register only) and `67:441` (closed, neither). See
+    /// `docs/pressgram/registration-flow.md` for the full table.
     private var textLinks: some View {
-        // Phase 1.5: invite-request is live. Register remains disabled until the
-        // Pressgram-flavoured register flow lands.
+        // Phase 1.5: register link is visually present per Figma but not yet wired —
+        // the Pressgram-flavoured register flow (token entry + MAS `login_hint`)
+        // lands in Phase 2.
         VStack(spacing: 16) {
-            Text(PGramStrings.welcomeRegister)
-                .font(.system(size: 16, weight: .semibold))
-                .underline()
-                .foregroundStyle(.white.opacity(0.35))
-
-            Button { context.send(viewAction: .requestInvite) } label: {
-                Text(PGramStrings.welcomeRequestInvite)
+            if context.viewState.showRegisterLink {
+                Text(context.viewState.registerLabel)
                     .font(.system(size: 16, weight: .semibold))
                     .underline()
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.white.opacity(0.35))
             }
-            .buttonStyle(.plain)
+
+            if context.viewState.showInviteRequestLink {
+                Button { context.send(viewAction: .requestInvite) } label: {
+                    Text(PGramStrings.welcomeRequestInvite)
+                        .font(.system(size: 16, weight: .semibold))
+                        .underline()
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }
@@ -182,19 +191,33 @@ struct PGramWelcomeScreen: View {
 // MARK: - Previews
 
 struct PGramWelcomeScreen_Previews: PreviewProvider, TestablePreview {
-    static let defaultViewModel = PGramWelcomeScreenViewModel(currentHomeserver: "pgram.im",
-                                                              currentServerDisplayName: "Центральный (pgram.im)",
-                                                              showQRCodeLoginButton: true)
+    static let openServer = PGramMockCatalog.servers.first { $0.homeserver == "pgram.im" }
+    static let tokenServer = PGramMockCatalog.servers.first { $0.homeserver == "newsroom.pgram.im" }
+    static let closedServer = PGramMockCatalog.servers.first { $0.homeserver == "archive.pgram.im" }
 
-    static let customViewModel = PGramWelcomeScreenViewModel(currentHomeserver: "newsroom.pgram.im",
-                                                             currentServerDisplayName: "Редакция №1 (newsroom.pgram.im)",
-                                                             showQRCodeLoginButton: true)
+    static let openViewModel = PGramWelcomeScreenViewModel(currentHomeserver: "pgram.im",
+                                                           currentServerDisplayName: "Центральный (pgram.im)",
+                                                           showQRCodeLoginButton: true,
+                                                           selectedServer: openServer)
+
+    static let tokenViewModel = PGramWelcomeScreenViewModel(currentHomeserver: "newsroom.pgram.im",
+                                                            currentServerDisplayName: "Редакция №1 (newsroom.pgram.im)",
+                                                            showQRCodeLoginButton: true,
+                                                            selectedServer: tokenServer)
+
+    static let closedViewModel = PGramWelcomeScreenViewModel(currentHomeserver: "archive.pgram.im",
+                                                             currentServerDisplayName: "Архив (archive.pgram.im)",
+                                                             showQRCodeLoginButton: true,
+                                                             selectedServer: closedServer)
 
     static var previews: some View {
-        PGramWelcomeScreen(context: defaultViewModel.context)
-            .previewDisplayName("Default — pgram.im")
+        PGramWelcomeScreen(context: openViewModel.context)
+            .previewDisplayName("Open registration — pgram.im")
 
-        PGramWelcomeScreen(context: customViewModel.context)
-            .previewDisplayName("Custom server")
+        PGramWelcomeScreen(context: tokenViewModel.context)
+            .previewDisplayName("Token + public — newsroom.pgram.im")
+
+        PGramWelcomeScreen(context: closedViewModel.context)
+            .previewDisplayName("Closed — archive.pgram.im")
     }
 }

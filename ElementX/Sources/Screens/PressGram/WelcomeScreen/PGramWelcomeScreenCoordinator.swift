@@ -11,6 +11,7 @@ struct PGramWelcomeScreenCoordinatorParameters {
     let currentHomeserver: String
     let currentServerDisplayName: String
     let showQRCodeLoginButton: Bool
+    let selectedServer: PGramServer?
 }
 
 enum PGramWelcomeScreenCoordinatorAction {
@@ -36,7 +37,8 @@ final class PGramWelcomeScreenCoordinator: CoordinatorProtocol {
         self.parameters = parameters
         viewModel = PGramWelcomeScreenViewModel(currentHomeserver: parameters.currentHomeserver,
                                                 currentServerDisplayName: parameters.currentServerDisplayName,
-                                                showQRCodeLoginButton: parameters.showQRCodeLoginButton)
+                                                showQRCodeLoginButton: parameters.showQRCodeLoginButton,
+                                                selectedServer: parameters.selectedServer)
     }
 
     func start() {
@@ -60,8 +62,8 @@ final class PGramWelcomeScreenCoordinator: CoordinatorProtocol {
         .store(in: &cancellables)
     }
 
-    func updateCurrentServer(homeserver: String, displayName: String) {
-        viewModel.updateServer(homeserver: homeserver, displayName: displayName)
+    func updateCurrentServer(homeserver: String, displayName: String, selectedServer: PGramServer?) {
+        viewModel.updateServer(homeserver: homeserver, displayName: displayName, selectedServer: selectedServer)
     }
 
     func toPresentable() -> AnyView {
