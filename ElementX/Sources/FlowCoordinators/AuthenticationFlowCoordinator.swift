@@ -366,13 +366,16 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
 
                 switch action {
                 case .loginWithPassword:
-                    // Delegate to the vanilla path — ServerConfirmation owns the
-                    // window injection that ASWebAuthenticationSession needs.
-                    // Confirmed (2026-05-23) the vanilla path works end-to-end;
-                    // PGramWelcome's direct OIDC dispatch silently dropped the
-                    // web view (suspected window-injection race). Direct dispatch
-                    // lands in Phase 1.5 once the race is traced.
-                    stateMachine.tryEvent(.confirmServer(.login))
+                    // Skip the vanilla "Choose account provider" confirmation step
+                    // — Welcome already shows the selected server. We configure the
+                    // service, fetch the OIDC URL, and transition directly to
+                    // `.oidcAuthentication`. The state machine already supports
+                    // `.startScreen => .oidcAuthentication` via `.continueWithOIDC`.
+                    // Any failure falls back to the vanilla server-confirmation
+                    // path so the user gets the upstream error UX for free.
+                    Task { [weak self] in
+                        await self?.pgramTryDirectLogin()
+                    }
                 case .loginWithQR:
                     stateMachine.tryEvent(.loginWithQR)
                 case .register:
@@ -472,6 +475,58 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
     /// register / invite-request links in that case.
     private static func pgramLookupServer(homeserver: String) -> PGramServer? {
         PGramMockCatalog.servers.first { $0.homeserver == homeserver }
+    }
+
+    /// Mirrors `AuthenticationStartScreenViewModel.configureAccountProvider` for the
+    /// Pressgram welcome screen. Skips the vanilla server-confirmation step entirely
+    /// when the homeserver supports OIDC; falls back to `.confirmServer(.login)` for
+    /// every other case (no captured window, configure failure, password-only server,
+    /// OIDC URL failure) so the user gets the upstream error UX.
+    private func pgramTryDirectLogin() async {
+        let homeserver = PressgramUserPreferences.shared.lastSelectedHomeserver
+            ?? appSettings.accountProviders.first
+            ?? "pgram.im"
+
+        guard let window = pgramWelcomeCoordinator?.presentationWindow else {
+            MXLog.warning("PGramWelcome: no presentation window — falling back to vanilla path")
+            pgramFallbackToServerConfirmation()
+            return
+        }
+
+        let loadingId = "PGramWelcome-DirectLogin"
+        userIndicatorController.submitIndicator(UserIndicator(id: loadingId,
+                                                              type: .modal,
+                                                              title: L10n.commonLoading,
+                                                              persistent: true))
+        defer { userIndicatorController.retractIndicatorWithId(loadingId) }
+
+        if case .failure = await authenticationService.configure(for: homeserver, flow: .login) {
+            MXLog.warning("PGramWelcome: configure(for: \(homeserver)) failed — falling back to vanilla path")
+            pgramFallbackToServerConfirmation()
+            return
+        }
+
+        guard authenticationService.homeserver.value.loginMode.supportsOIDCFlow else {
+            // Password-only servers — the vanilla flow handles the login form.
+            pgramFallbackToServerConfirmation()
+            return
+        }
+
+        switch await authenticationService.urlForOIDCLogin(loginHint: nil) {
+        case .success(let oidcData):
+            // The user may have navigated away (catalog sheet, app backgrounded)
+            // while configure + urlForOIDCLogin were running.
+            guard stateMachine.state == .startScreen else { return }
+            stateMachine.tryEvent(.continueWithOIDC, userInfo: (oidcData, window))
+        case .failure:
+            MXLog.warning("PGramWelcome: urlForOIDCLogin failed — falling back to vanilla path")
+            pgramFallbackToServerConfirmation()
+        }
+    }
+
+    private func pgramFallbackToServerConfirmation() {
+        guard stateMachine.state == .startScreen else { return }
+        stateMachine.tryEvent(.confirmServer(.login))
     }
 
     // MARK: - QR Code
